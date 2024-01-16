@@ -116,6 +116,7 @@ impl Runtime {
     }
 
     pub fn spawn(&mut self, f: fn(u64), arg: u64) {
+        let rt_ptr = self as *const Self as u64;
         let available = self
             .threads
             .iter_mut()
@@ -126,27 +127,35 @@ impl Runtime {
         let s_ptr = available.stack.as_mut_ptr();
 
         unsafe {
+            // ptr::write(s_ptr.offset((size - 16) as isize) as *mut u64, rt_ptr);
             ptr::write(s_ptr.offset((size - 24) as isize) as *mut u64, guard as u64);
             ptr::write(s_ptr.offset((size - 32) as isize) as *mut u64, f as u64);
             available.ctx.rsp = s_ptr.offset((size - 32) as isize) as u64;
+            println!("[spawn]s_ptr: {:#x}", available.ctx.rsp);
             available.ctx.rdi = arg;
         }
         available.state = State::Ready;
     }
 }
 
+
 fn guard() {
     unsafe {
-        let rt_ptr = RUNTIME as *mut Runtime;
-        (*rt_ptr).t_return();
+        let stack_pointer: usize;
+        asm!("mov {}, rsp", out(reg) stack_pointer);
+        println!("[guard] sp: {:#x}", stack_pointer);
+        // let rt_ptr: u64;
+        // asm!(
+        //     "mov rdi, rsp
+        //      sub rdi, 8
+        //      mov {}, [rdi]",
+        //     out(reg) rt_ptr,
+        // );
+        (*(RUNTIME as *mut Runtime)).t_return();
     };
 }
 
 pub fn yield_thread(rt: &mut Runtime) {
-    // unsafe {
-    //     let rt_ptr = RUNTIME as *mut Runtime;
-    //     (*rt_ptr).t_yield();
-    // };
     rt.t_yield();
 }
 

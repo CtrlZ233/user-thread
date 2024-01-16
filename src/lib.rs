@@ -12,21 +12,22 @@ mod tests {
         runtime.init();
 
         runtime.spawn(coroutine1, &runtime as *const Runtime as u64);
-       
+        runtime.spawn(coroutine2, &runtime as *const Runtime as u64);
         runtime.run();
     }
 
     fn coroutine1(rt: u64) {
+
         let runtime = unsafe {
             &mut *(rt as *mut Runtime)
         };
         println!("THREAD 1 STARTING");
-        runtime.spawn(coroutine2, rt);
         let id = 1;
-        for i in 0..10 {
+        for i in 0..12 {
             println!("thread: {} counter: {}", id, i);
-            yield_thread(runtime);
+            // yield_thread(runtime);
         }
+        
         println!("THREAD 1 FINISHED");
     }
 
@@ -37,9 +38,9 @@ mod tests {
 
         println!("THREAD 2 STARTING");
         let id = 2;
-        for i in 0..10 {
+        for i in 0..12 {
             println!("thread: {} counter: {}", id, i);
-            yield_thread(runtime);
+            // yield_thread(runtime);
         }
         println!("THREAD 2 FINISHED");
     }
