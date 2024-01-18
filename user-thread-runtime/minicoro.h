@@ -288,6 +288,7 @@ typedef enum mco_result {
 typedef struct mco_coro mco_coro;
 struct mco_coro {
   void* context;
+  size_t cid;
   mco_state state;
   void (*func)(mco_coro* co);
   mco_coro* prev_co;

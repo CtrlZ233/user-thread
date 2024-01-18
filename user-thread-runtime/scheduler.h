@@ -1,16 +1,24 @@
-#include "minicoro.h"
+#include "lfqueue.h"
+#define MAX_COROUTINE_NUM 128
 
 
-typedef long int seL4_CPtr;
 
-class Notification {
-    public:
-        void send_signal();
+struct runtime {
+    mco_coro *cos[MAX_COROUTINE_NUM];
+    mco_coro *current;
+    lfqueue ready_queue;
 };
 
-class Runtime {
-    public:
-        Runtime(seL4_CPtr send_notification, seL4_CPtr recv_notification, seL4_CPtr ipc_buf);
-        
+
+
+struct sender {
+
 };
 
+struct receiver {
+
+};
+
+struct ipc_buffer {
+
+};
