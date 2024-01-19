@@ -24,9 +24,15 @@ seL4_CPtr create_runtime() {
 void runtime_run(int runtime) {
     mco_coro *current;
     while (1) {
-        while (current = lfqueue_pop(&RUNTIMES[runtime].ready_queue)) {
+        while (current = co_queue_pop(&RUNTIMES[runtime].ready_queue)) {
             RUNTIMES[runtime].current = current;
             mco_resume(current);
+            if (mco_status(current) == MCO_DEAD) {
+                printf("dead cortouine\n");
+                RUNTIMES[runtime].cos[current->cid] = NULL;
+                mco_destroy(current);
+            }
+            
         }
         RUNTIMES[runtime].current = NULL;
         // suspend thread
@@ -48,7 +54,7 @@ int spwan_coroutine(int runtime, void (*func)(void* args), void *args) {
     mco_result res = mco_create(&co, &desc);
     if(res != MCO_SUCCESS) {
         printf("Failed to create coroutine\n");
-        return NULL;
+        return -1;
     }
     mco_push(co, &func, sizeof(func));
     mco_push(co, &args, sizeof(args));
@@ -58,7 +64,7 @@ int spwan_coroutine(int runtime, void (*func)(void* args), void *args) {
             cid = i;
             co->cid = cid;
             RUNTIMES[runtime].cos[i] = co;
-            lfqueue_push(&RUNTIMES[runtime].ready_queue, co);
+            co_queue_push(&RUNTIMES[runtime].ready_queue, co);
             break;
         }
     }
@@ -80,7 +86,7 @@ struct args {
 void coroutine1(void *args) {
     struct args* a = args;
     printf("a: %d, b: %d\n", a->a, a->b);
-    mco_yield(RUNTIMES->current);
+    // mco_yield(RUNTIMES->current);
     printf("yield after\n");
 }
 
@@ -94,6 +100,6 @@ int main() {
         .b = 7,
         .rt = rt_id,
     };
-    mco_coro* co = spwan_coroutine(rt_id, coroutine1, &a);
+    int cid = spwan_coroutine(rt_id, coroutine1, &a);
     runtime_run(rt_id);
 }

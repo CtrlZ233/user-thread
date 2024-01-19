@@ -1,4 +1,4 @@
-#include "lfqueue.h"
+#include "queue.h"
 #define MAX_COROUTINE_NUM 128
 
 
@@ -6,7 +6,7 @@
 struct runtime {
     mco_coro *cos[MAX_COROUTINE_NUM];
     mco_coro *current;
-    lfqueue ready_queue;
+    co_queue ready_queue;
 };
 
 
